@@ -5,24 +5,24 @@ signal shoot
 signal shoot_charged
 
 
-onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
+const COYOTE_TIME = 0.065
+const RECHARGE_TIME = 3
+const CHARGE_TIME = 1.5
 
 
-export (int) var speed = 400
 export (int) var jump_speed = 1000
 export (int) var max_fall_speed = 950
 
 
-const COYOTE_TIME = 0.065
-const RECHARGE_TIME = 2
-const CHARGE_TIME = 1
+onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
 
 
 var velocity = Vector2.ZERO
 var is_grounded = false
 var is_jumping = false
-var is_shooting = false
+var is_recharging = false
 var is_charging = false
+var is_charged = false
 var jump_buffer = 0
 var recharge_timer = 0
 var charge_timer = 0
@@ -34,28 +34,24 @@ func get_rect():
 
 
 func _input(event):
-	if is_shooting:
-		return
-	
 	if event.is_action_pressed("shoot") and is_charging == false:
 		is_charging = true
 		charge_timer = 0
+	elif is_recharging:
+		return
 	elif event.is_action_released("shoot"):
-		if charge_timer > CHARGE_TIME:
+		if is_charged:
 			emit_signal("shoot_charged")
 		else:
 			emit_signal("shoot")
 		charge_timer = 0
-		is_shooting = true
+		is_recharging = true
+		is_charging = false
+		is_charged = false
 
 
 func _physics_process(delta):
 	velocity.x = 0
-	
-#	if Input.is_action_pressed("move_left"):
-#		velocity.x -= speed
-#	if Input.is_action_pressed("move_right"):
-#		velocity.x += speed
 	
 	is_grounded = is_on_floor()
 	if !is_grounded and !is_jumping:
@@ -82,12 +78,17 @@ func _physics_process(delta):
 	
 	velocity = move_and_slide(velocity, Vector2.UP)
 	
-	if is_shooting:
+	if is_recharging:
 		recharge_timer += delta
 		if recharge_timer >= RECHARGE_TIME:
 			recharge_timer = 0
-			is_shooting = false
+			is_recharging = false
+			print("Ready")
 	
-	if !is_shooting and is_charging:
+	if !is_recharging and is_charging:
 		charge_timer += delta
+		if charge_timer >= CHARGE_TIME:
+			if is_charged == false:
+				print("Charged")
+			is_charged = true
 
