@@ -12,12 +12,12 @@ func _process(delta):
 
 
 func _on_Player_shoot():
-	print("shoot")
+	print("Regular shot")
 	_spawn_bullet(false)
 
 
 func _on_Player_shoot_charged():
-	print("shoot_charged")
+	print("Charged shot")
 	_spawn_bullet(true)
 
 
@@ -38,11 +38,9 @@ func _on_Decay_intersects(body):
 			$Decay.push_back()
 		else:
 			$Decay.slow()
-		print("Bullet")
 
 
 func _on_Bullet_intersects(body):
 	if body == $World/TileMap:
 		bullet.is_spent = true
-		print("Bullet hit ground")
 

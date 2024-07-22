@@ -24,7 +24,6 @@ func _process(delta):
 		slow_timer += delta
 		if slow_timer >= SLOW_TIME:
 			is_slowed = false
-			print("no longer slowed")
 	
 	if grow_direction != 0:
 		var size = get_size()

@@ -10,8 +10,8 @@ const RECHARGE_TIME = 3
 const CHARGE_TIME = 1.5
 
 
-export (int) var jump_speed = 1000
-export (int) var max_fall_speed = 950
+export (int) var jump_speed = 800
+export (int) var max_fall_speed = 750
 
 
 onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
@@ -20,6 +20,7 @@ onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
 var velocity = Vector2.ZERO
 var is_grounded = false
 var is_jumping = false
+var allow_jumping = true
 var is_recharging = false
 var is_charging = false
 var is_charged = false
@@ -37,9 +38,11 @@ func _input(event):
 	if event.is_action_pressed("shoot") and is_charging == false:
 		is_charging = true
 		charge_timer = 0
-	elif is_recharging:
+	
+	if is_recharging:
 		return
-	elif event.is_action_released("shoot"):
+	
+	if event.is_action_released("shoot"):
 		if is_charged:
 			emit_signal("shoot_charged")
 		else:
@@ -67,10 +70,13 @@ func _physics_process(delta):
 		velocity.y += gravity
 	
 	# allow jumping while we're within the jump buffer
-	if !is_jumping and jump_buffer < COYOTE_TIME and Input.is_action_pressed("jump"):
+	if allow_jumping and !is_jumping and jump_buffer < COYOTE_TIME and Input.is_action_pressed("jump"):
+		allow_jumping = false
 		is_jumping = true
 		velocity.y = -jump_speed
 		jump_buffer = 0
+	if Input.is_action_just_released("jump"):
+		allow_jumping = true
 	
 	# clamp falling speed to prevent endless acceleration?
 	if velocity.y > max_fall_speed:
@@ -83,12 +89,12 @@ func _physics_process(delta):
 		if recharge_timer >= RECHARGE_TIME:
 			recharge_timer = 0
 			is_recharging = false
-			print("Ready")
+			print("Shot ready")
 	
 	if !is_recharging and is_charging:
 		charge_timer += delta
 		if charge_timer >= CHARGE_TIME:
 			if is_charged == false:
-				print("Charged")
+				print("Shot fully charged")
 			is_charged = true
 
