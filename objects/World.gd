@@ -1,6 +1,10 @@
 extends Node2D
 
 
+var Feature = preload("res://objects/feature.gd")
+var Prop = preload("res://objects/prop.gd")
+
+
 const RESET_X = 3072
 const SCREEN_SIZE_X = 1024
 const SCREEN_TILES_X = 32
@@ -31,7 +35,11 @@ export (int) var speed = 400
 
 var direction = Vector2.ZERO
 var pixels_moved = 0
+var pixels_moved_decay = 0
 var rendered = 0
+var features = []
+var props = []
+var decay_size_x = 0
 
 
 func move(delta):
@@ -40,6 +48,7 @@ func move(delta):
 	var movement = direction.normalized() * speed * delta
 	position += movement
 	pixels_moved += -movement.x
+	pixels_moved_decay += -movement.x
 	
 	if pixels_moved > SCREEN_SIZE_X:
 		pixels_moved = 0
@@ -48,6 +57,87 @@ func move(delta):
 	if -position.x >= RESET_X:
 		position.x = 0
 		_reset()
+	
+	if pixels_moved_decay > TILE_SIZE:
+		pixels_moved_decay = 0
+		_apply_decay()
+
+
+func _apply_decay():
+	var start_cell_x = ceil(abs(position.x) / TILE_SIZE)
+	var end_cell_x = ceil((abs(position.x) + decay_size_x) / TILE_SIZE)
+	
+	for prop in props:
+		var x = prop.rect.position.x
+		if x >= start_cell_x and x <= end_cell_x and !prop.has_decayed:
+			prop.has_decayed = true
+			_render_prop_decayed(prop)
+
+
+func _render_prop_decayed(prop):
+	if prop.type == 0:
+		_render_small_tree(prop.rect, true)
+	elif prop.type == 1:
+		_render_bush(prop.rect, prop.subtype, true)
+	elif prop.type == 2:
+		_render_grass(prop.rect, prop.subtype, true)
+	elif prop.type == 3:
+		_render_tree(prop.rect, prop.subtype, true)
+
+
+func _render_tree(rect, subtype, decayed = false):
+	var decay_offset = 0
+	if decayed:
+		decay_offset = 16
+	
+	var subtype_base = TILE_SIZE * subtype
+	var start_x = rect.position.x
+	var start_y = rect.position.y
+	for tile_x in TREE_WIDTH:
+		var tile = TREES_TILE_INDEX + subtype_base + tile_x + decay_offset
+		$Props.set_cell(start_x + tile_x, start_y, tile + 12)
+		$Props.set_cell(start_x + tile_x, start_y + 1, tile + 8)
+		$Props.set_cell(start_x + tile_x, start_y + 2, tile + 4)
+		$Props.set_cell(start_x + tile_x, start_y + 3, tile)
+
+
+func _render_grass(rect, subtype, decayed = false):
+	var decay_offset = 0
+	if decayed:
+		decay_offset = 2
+
+	var subtype_base = (GRASS_WIDTH * GRASS_HEIGHT) * 2 * subtype
+	var start_x = rect.position.x
+	var start_y = rect.position.y
+	for tile_x in GRASS_WIDTH:
+		var tile = GRASS_TILE_INDEX + subtype_base + tile_x + decay_offset
+		$Props.set_cell(start_x + tile_x, start_y, tile)
+
+
+func _render_bush(rect, subtype, decayed = false):
+	var decay_offset = 0
+	if decayed:
+		decay_offset = 2
+	
+	var subtype_base = (BUSH_WIDTH * BUSH_HEIGHT) * 2 * subtype
+	var start_x = rect.position.x
+	var start_y = rect.position.y
+	for tile_x in rect.size.x:
+		var tile = BUSH_TILE_INDEX + subtype_base + tile_x + decay_offset
+		$Props.set_cell(start_x + tile_x, start_y, tile)
+
+
+func _render_small_tree(rect, decayed = false):
+	var decay_offset = 0
+	if decayed:
+		decay_offset = 4
+	
+	var start_x = rect.position.x
+	var start_y = rect.position.y
+	for tile_x in rect.size.x:
+		var tile = SMALL_TREE_TILE_INDEX + tile_x + decay_offset
+		$Props.set_cell(start_x + tile_x, start_y, tile + 2)
+		$Props.set_cell(start_x + tile_x, start_y + 1, tile)
 
 
 func _ready():
@@ -60,13 +150,21 @@ func _reset(skip_copy = false):
 	# copy the last part of the tilemap
 	var tiles_environment = []
 	var tiles_props = []
+	var copied_features = []
+	var copied_props = []
 	if !skip_copy:
 		tiles_environment = _copy_last_screen($Environment)
 		tiles_props = _copy_last_screen($Props)
+		copied_features = _copy_last_screen_array(features)
+		copied_props = _copy_last_screen_array(props)
 	
-	# clear the tilemap and draw the ground
+	# clear the environment and props
 	$Environment.clear()
 	$Props.clear()
+	features.clear()
+	props.clear()
+	
+	# draw the ground
 	var y = GROUND_Y_BEGIN
 	for x in 4096:
 		$Environment.set_cell(x, y, 0)
@@ -79,6 +177,8 @@ func _reset(skip_copy = false):
 	if !skip_copy:
 		_paste_last_screen(tiles_environment, $Environment)
 		_paste_last_screen(tiles_props, $Props)
+		features = _paste_last_screen_array(copied_features)
+		props = _paste_last_screen_array(copied_props)
 
 
 func _copy_last_screen(tilemap):
@@ -96,11 +196,25 @@ func _paste_last_screen(tiles, tilemap):
 		tilemap.set_cell(tile.x, tile.y, tile.z)
 
 
+func _copy_last_screen_array(arr):
+	var copied = []
+	for item in arr:
+		if item.rect.position.x >= SCREEN_TILES_X * 3:
+			copied.append(item)
+	return copied
+
+
+func _paste_last_screen_array(arr):
+	var pasted = []
+	for item in arr:
+		item.rect.position.x -= SCREEN_TILES_X * 3
+		pasted.append(item)
+	return pasted
+
+
 func _generate_next_screen():
 	var x_min = rendered / TILE_SIZE
 	var x_max = (rendered + SCREEN_SIZE_X) / TILE_SIZE
-	
-	print("Render next screen at ", x_min, ",", x_max)
 	
 	rendered += SCREEN_SIZE_X
 	
@@ -108,19 +222,24 @@ func _generate_next_screen():
 	_generate_props(x_min, x_max, 10)
 
 
-func _generate_features(x_min, x_max, amount = 1):
+func _generate_features(x_min, x_max, amount):
 	for i in amount:
 		_generate_feature(x_min, x_max)
 
 
 func _generate_feature(x_min, x_max):
+	var feature = null
+	
 	var type = randi() % 3
 	if type == 2:
-		_generate_hole(x_min, x_max)
+		feature = _generate_hole(x_min, x_max)
 	elif type == 1:
-		_generate_pillar(x_min, x_max)
+		feature = _generate_pillar(x_min, x_max)
 	else:
-		_generate_platform(x_min, x_max)
+		feature = _generate_platform(x_min, x_max)
+	
+	if feature != null:
+		features.append(feature)
 
 
 func _generate_platform(x_min, x_max):
@@ -131,7 +250,7 @@ func _generate_platform(x_min, x_max):
 	
 	# prevent features from overlapping or touching
 	if _find_feature_in_vicinity(x, y, width, height):
-		return
+		return null
 
 	for x_offset in width + 1:
 		for y_offset in height:
@@ -139,6 +258,8 @@ func _generate_platform(x_min, x_max):
 			if y_offset > 0:
 				tile = 1
 			$Environment.set_cell(x + x_offset, y + y_offset, tile)
+	
+	return Feature.new(x, y, width, height, 0)
 
 
 func _generate_pillar(x_min, x_max):
@@ -152,7 +273,7 @@ func _generate_pillar(x_min, x_max):
 	
 	# prevent features from overlapping or touching
 	if _find_feature_in_vicinity(x, y, width, height):
-		return
+		return null
 	
 	for x_offset in width + 1:
 		for y_offset in height:
@@ -161,6 +282,8 @@ func _generate_pillar(x_min, x_max):
 				tile = 1
 			$Environment.set_cell(x + x_offset, y + y_offset, tile)
 		$Environment.set_cell(x + x_offset, GROUND_Y_BEGIN, 1)
+	
+	return Feature.new(x, y, width, height, 1)
 
 
 func _generate_hole(x_min, x_max):
@@ -171,11 +294,13 @@ func _generate_hole(x_min, x_max):
 	
 	# prevent features from overlapping or touching
 	if _find_feature_in_vicinity(x, y, width, height):
-		return
+		return null
 	
 	for x_offset in width + 1:
 		for y_offset in height:
 			$Environment.set_cell(x + x_offset, y + y_offset, -1)
+	
+	return Feature.new(x, y, width, height, 2)
 
 
 func _find_feature_in_vicinity(cell_x, _cell_y, cells_width, _cells_height):
@@ -189,21 +314,26 @@ func _find_feature_in_vicinity(cell_x, _cell_y, cells_width, _cells_height):
 	return false
 
 
-func _generate_props(x_min, x_max, amount = 1):
+func _generate_props(x_min, x_max, amount):
 	for i in amount:
 		_generate_prop(x_min, x_max)
 
 
 func _generate_prop(x_min, x_max):
+	var prop = null
+	
 	var type = randi() % 10
 	if type >= 6:
-		_generate_tree(x_min, x_max)
+		prop = _generate_tree(x_min, x_max)
 	if type <= 3:
-		_generate_grass(x_min, x_max)
+		prop = _generate_grass(x_min, x_max)
 	elif type == 4:
-		_generate_bush(x_min, x_max)
+		prop = _generate_bush(x_min, x_max)
 	elif type == 5:
-		_generate_small_tree(x_min, x_max)
+		prop = _generate_small_tree(x_min, x_max)
+	
+	if prop != null:
+		props.append(prop)
 
 
 func _generate_tree(x_min, x_max):
@@ -217,23 +347,18 @@ func _generate_tree(x_min, x_max):
 			is_allowed = false
 			break
 	if !is_allowed:
-		return
+		return null
 	
 	# prevent props from overlapping or touching
 	if _find_prop_in_vicinity(x, y, TREE_WIDTH, TREE_HEIGHT) != null or _find_feature_in_vicinity(x, y, TREE_WIDTH, TREE_HEIGHT):
-		return
+		return null
 	
 	var subtype = randi() % 3
-	var subtype_base = TILE_SIZE * subtype
-	
 	var start_x = x
 	var start_y = y - TREE_HEIGHT
-	for tile_x in TREE_WIDTH:
-		var tile = TREES_TILE_INDEX + subtype_base + tile_x
-		$Props.set_cell(start_x + tile_x, start_y, tile + 12)
-		$Props.set_cell(start_x + tile_x, start_y + 1, tile + 8)
-		$Props.set_cell(start_x + tile_x, start_y + 2, tile + 4)
-		$Props.set_cell(start_x + tile_x, start_y + 3, tile)
+	_render_tree(Rect2(start_x, start_y, TREE_WIDTH, TREE_HEIGHT), subtype)
+	
+	return Prop.new(start_x, start_y, TREE_WIDTH, TREE_HEIGHT, 3, subtype)
 
 
 func _generate_grass(x_min, x_max):
@@ -247,19 +372,18 @@ func _generate_grass(x_min, x_max):
 			is_allowed = false
 			break
 	if !is_allowed:
-		return
+		return null
 	
 	# prevent props from overlapping or touching
 	if _find_prop_in_vicinity(x, y, GRASS_WIDTH, GRASS_HEIGHT) != null or _find_feature_in_vicinity(x, y, GRASS_WIDTH, GRASS_HEIGHT):
-		return
+		return null
 	
 	var subtype = randi() % 3
-	var subtype_base = (GRASS_WIDTH * GRASS_HEIGHT) * 2 * subtype
-	
 	var start_x = x
 	var start_y = y - GRASS_HEIGHT
-	for tile_x in GRASS_WIDTH:
-		$Props.set_cell(start_x + tile_x, start_y, GRASS_TILE_INDEX + subtype_base + tile_x)
+	_render_grass(Rect2(start_x, start_y, GRASS_WIDTH, GRASS_HEIGHT), subtype)
+	
+	return Prop.new(start_x, start_y, GRASS_WIDTH, GRASS_HEIGHT, 2, subtype)
 
 
 func _generate_bush(x_min, x_max):
@@ -273,20 +397,18 @@ func _generate_bush(x_min, x_max):
 			is_allowed = false
 			break
 	if !is_allowed:
-		return
+		return null
 	
 	# prevent props from overlapping or touching
 	if _find_prop_in_vicinity(x, y, BUSH_WIDTH, BUSH_HEIGHT) != null or _find_feature_in_vicinity(x, y, BUSH_WIDTH, BUSH_HEIGHT):
-		return
+		return null
 	
 	var subtype = randi() % 2
-	var subtype_base = (BUSH_WIDTH * BUSH_HEIGHT) * 2 * subtype
-	
 	var start_x = x
 	var start_y = y - BUSH_HEIGHT
-	for tile_x in BUSH_WIDTH:
-		var tile = BUSH_TILE_INDEX + subtype_base + tile_x
-		$Props.set_cell(start_x + tile_x, start_y, tile)
+	_render_bush(Rect2(start_x, start_y, BUSH_WIDTH, BUSH_HEIGHT), subtype)
+	
+	return Prop.new(start_x, start_y, BUSH_WIDTH, BUSH_HEIGHT, 1, subtype)
 
 
 func _generate_small_tree(x_min, x_max):
@@ -300,18 +422,17 @@ func _generate_small_tree(x_min, x_max):
 			is_allowed = false
 			break
 	if !is_allowed:
-		return
+		return null
 	
 	# prevent props from overlapping or touching
 	if _find_prop_in_vicinity(x, y, SMALL_TREE_WIDTH, SMALL_TREE_HEIGHT) != null or _find_feature_in_vicinity(x, y, SMALL_TREE_WIDTH, SMALL_TREE_HEIGHT):
-		return
-	
+		return null
+
 	var start_x = x
 	var start_y = y - SMALL_TREE_HEIGHT
-	for tile_x in SMALL_TREE_WIDTH:
-		var tile = SMALL_TREE_TILE_INDEX + tile_x
-		$Props.set_cell(start_x + tile_x, start_y, tile + 2)
-		$Props.set_cell(start_x + tile_x, start_y + 1, tile)
+	_render_small_tree(Rect2(start_x, start_y, SMALL_TREE_WIDTH, SMALL_TREE_HEIGHT))
+	
+	return Prop.new(start_x, start_y, SMALL_TREE_WIDTH, SMALL_TREE_HEIGHT, 0, 0)
 
 
 func _find_prop_in_vicinity(cell_x, cell_y, cells_width, cells_height):

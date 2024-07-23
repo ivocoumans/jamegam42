@@ -6,9 +6,20 @@ var Bullet = preload("res://objects/Bullet.tscn")
 
 var bullet = null
 var score_timer = 0
+var is_paused = false
+
+
+func _input(event):
+	if event.is_action_pressed("pause"):
+		is_paused = !is_paused
+		$Decay.pause()
+		$Player.pause()
 
 
 func _process(delta):
+	if is_paused:
+		return
+	
 	$World.move(delta)
 	score_timer += delta
 	if score_timer > 1:
@@ -17,12 +28,10 @@ func _process(delta):
 
 
 func _on_Player_shoot():
-	print("Regular shot")
 	_spawn_bullet(false)
 
 
 func _on_Player_shoot_charged():
-	print("Charged shot")
 	_spawn_bullet(true)
 
 
@@ -66,4 +75,8 @@ func _on_Player_is_charging():
 
 func _on_Player_is_charged():
 	$UI/WandStatus.charged()
+
+
+func _on_Decay_grown(size_x):
+	$World.decay_size_x = size_x
 

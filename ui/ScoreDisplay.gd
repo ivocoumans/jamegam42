@@ -10,8 +10,8 @@ func increase_score():
 
 
 func _ready():
-	var _score = 0
-	$Score.text = "0"
+	_score = 0
+	_set_score_text()
 
 
 func _set_score_text():

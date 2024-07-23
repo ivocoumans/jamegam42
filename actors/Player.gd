@@ -23,6 +23,7 @@ onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
 
 
 var velocity = Vector2.ZERO
+var is_shooting = false
 var is_grounded = false
 var is_jumping = false
 var allow_jumping = true
@@ -33,6 +34,15 @@ var jump_buffer = 0
 var recharge_timer = 0
 var charge_timer = 0
 var initial_x = 0
+var is_paused = false
+
+
+func pause():
+	is_paused = !is_paused
+	if is_paused:
+		$AnimationPlayer.stop()
+	else:
+		$AnimationPlayer.play()
 
 
 func get_rect():
@@ -63,9 +73,14 @@ func _input(event):
 		is_charging = false
 		is_charged = false
 		emit_signal("is_recharging")
+		is_shooting = true
+		$AnimationPlayer.play("shoot")
 
 
 func _physics_process(delta):
+	if is_paused:
+		return
+	
 	velocity.x = 0
 	
 	is_grounded = is_on_floor()
@@ -108,14 +123,24 @@ func _physics_process(delta):
 		if recharge_timer >= RECHARGE_TIME:
 			recharge_timer = 0
 			is_recharging = false
-			print("Shot ready")
 			emit_signal("is_recharged")
 	
 	if !is_recharging and is_charging:
 		charge_timer += delta
 		if charge_timer >= CHARGE_TIME:
-			if is_charged == false:
-				print("Shot fully charged")
 			is_charged = true
 			emit_signal("is_charged")
+	
+	if $AnimationPlayer.current_animation != "shoot" and !is_shooting:
+		if is_grounded and $AnimationPlayer.current_animation != "run":
+			$AnimationPlayer.play("run")
+		if !is_grounded and is_jumping and $AnimationPlayer.current_animation != "jump":
+			$AnimationPlayer.play("jump")
+		if !is_grounded and !is_jumping and $AnimationPlayer.current_animation != "jump":
+			$AnimationPlayer.play("jump")
+
+
+func _on_AnimationPlayer_animation_finished(anim_name):
+	if anim_name == "shoot":
+		is_shooting = false
 

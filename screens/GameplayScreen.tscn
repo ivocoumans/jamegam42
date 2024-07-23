@@ -31,4 +31,5 @@ position = Vector2( 512, 316 )
 [connection signal="is_recharging" from="Player" to="." method="_on_Player_is_recharging"]
 [connection signal="shoot" from="Player" to="." method="_on_Player_shoot"]
 [connection signal="shoot_charged" from="Player" to="." method="_on_Player_shoot_charged"]
+[connection signal="grown" from="Decay" to="." method="_on_Decay_grown"]
 [connection signal="intersects" from="Decay" to="." method="_on_Decay_intersects"]

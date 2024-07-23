@@ -2,6 +2,7 @@ extends ColorRect
 
 
 signal intersects(body)
+signal grown(size_x)
 
 
 const SLOW_TIME = 2.5
@@ -17,6 +18,11 @@ var is_slowed = false
 var is_push_back = false
 var slow_timer = 0
 var grow_direction = 1
+var is_paused = false
+
+
+func pause():
+	is_paused = !is_paused
 
  
 func slow():
@@ -31,6 +37,9 @@ func push_back():
 
 
 func _process(delta):
+	if is_paused:
+		return
+	
 	if is_slowed:
 		slow_timer += delta
 		if slow_timer >= SLOW_TIME:
@@ -51,6 +60,7 @@ func _process(delta):
 		
 		size.x += speed * delta
 		set_size(size)
+		emit_signal("grown", size.x)
 		
 		# move the Area2D with the resizing ColorRect
 		var rect = get_rect()
