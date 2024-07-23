@@ -38,9 +38,11 @@ func _on_Decay_intersects(body):
 			$Decay.push_back()
 		else:
 			$Decay.slow()
+		bullet.remove()
 
 
 func _on_Bullet_intersects(body):
-	if body == $World/TileMap:
+	if body == $World/Environment:
 		bullet.is_spent = true
+		bullet.remove()
 

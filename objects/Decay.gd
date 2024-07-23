@@ -8,15 +8,26 @@ const SLOW_TIME = 2.5
 const AREA_SIZE_X = 64
 
 
-export (int) var grow_speed = 15
-export (int) var pushback_speed = 250
-export (float) var slow_multiplier = 0.25
+export (int) var grow_speed = 12
+export (int) var pushback_speed = 350
+export (float) var slow_multiplier = 0.2
 
 
 var is_slowed = false
 var is_push_back = false
 var slow_timer = 0
 var grow_direction = 1
+
+ 
+func slow():
+	slow_timer = 0
+	is_slowed = true
+
+
+func push_back():
+	is_push_back = true
+	grow_direction = -1
+	slow()
 
 
 func _process(delta):
@@ -45,17 +56,6 @@ func _process(delta):
 		var rect = get_rect()
 		var x = rect.position.x + rect.size.x - AREA_SIZE_X
 		$Area2D.position.x = x
-
- 
-func slow():
-	slow_timer = 0
-	is_slowed = true
-
-
-func push_back():
-	is_push_back = true
-	grow_direction = -1
-	slow()
 
 
 func _on_Area2D_body_entered(body):

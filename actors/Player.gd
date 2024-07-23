@@ -12,6 +12,7 @@ const CHARGE_TIME = 1.5
 
 export (int) var jump_speed = 800
 export (int) var max_fall_speed = 750
+export (int) var catch_up_speed = 600
 
 
 onready var gravity = ProjectSettings.get("physics/2d/default_gravity")
@@ -27,11 +28,16 @@ var is_charged = false
 var jump_buffer = 0
 var recharge_timer = 0
 var charge_timer = 0
+var initial_x = 0
 
 
 func get_rect():
 	var size = $Sprite.get_rect().size
 	return Rect2(position - (size / 2), size)
+
+
+func _ready():
+	initial_x = position.x
 
 
 func _input(event):
@@ -81,6 +87,13 @@ func _physics_process(delta):
 	# clamp falling speed to prevent endless acceleration?
 	if velocity.y > max_fall_speed:
 		velocity.y = max_fall_speed
+	
+	# catch up when we're not in the air
+	if !is_jumping and is_grounded:
+		if position.x > initial_x:
+			position.x = initial_x
+		if position.x < initial_x:
+			velocity.x = catch_up_speed
 	
 	velocity = move_and_slide(velocity, Vector2.UP)
 	

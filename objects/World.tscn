@@ -1,14 +1,22 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://tiles/environment.tres" type="TileSet" id=1]
 [ext_resource path="res://objects/World.gd" type="Script" id=2]
+[ext_resource path="res://tiles/props.tres" type="TileSet" id=3]
 
 [node name="World" type="Node2D"]
 script = ExtResource( 2 )
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="Environment" type="TileMap" parent="."]
 tile_set = ExtResource( 1 )
 cell_size = Vector2( 32, 32 )
 cell_custom_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
+show_collision = true
+format = 1
+tile_data = PoolIntArray( 786441, 0, 0, 786442, 0, 0 )
+
+[node name="Props" type="TileMap" parent="."]
+tile_set = ExtResource( 3 )
+cell_size = Vector2( 32, 32 )
 show_collision = true
 format = 1
