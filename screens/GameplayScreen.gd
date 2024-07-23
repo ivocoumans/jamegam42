@@ -1,14 +1,19 @@
-extends Node2D
+extends Node
 
 
 var Bullet = preload("res://objects/Bullet.tscn")
 
 
 var bullet = null
+var score_timer = 0
 
 
 func _process(delta):
 	$World.move(delta)
+	score_timer += delta
+	if score_timer > 1:
+		$UI/ScoreDisplay.increase_score()
+		score_timer = 0
 
 
 func _on_Player_shoot():
@@ -45,4 +50,20 @@ func _on_Bullet_intersects(body):
 	if body == $World/Environment:
 		bullet.is_spent = true
 		bullet.remove()
+
+
+func _on_Player_is_recharging():
+	$UI/WandStatus.recharging()
+
+
+func _on_Player_is_recharged():
+	$UI/WandStatus.recharged()
+
+
+func _on_Player_is_charging():
+	$UI/WandStatus.charging()
+
+
+func _on_Player_is_charged():
+	$UI/WandStatus.charged()
 

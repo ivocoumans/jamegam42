@@ -1,0 +1,23 @@
+[gd_resource type="Theme" load_steps=4 format=2]
+
+[ext_resource path="res://assets/OpenSans-Regular.ttf" type="DynamicFontData" id=1]
+
+[sub_resource type="StyleBoxFlat" id=5]
+content_margin_left = 10.0
+content_margin_right = 10.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color( 0.231373, 0.223529, 0.262745, 1 )
+
+[sub_resource type="DynamicFont" id=2]
+size = 24
+font_data = ExtResource( 1 )
+
+[resource]
+default_font = SubResource( 2 )
+Button/colors/font_color = Color( 0.88, 0.88, 0.88, 1 )
+CheckButton/styles/hover = SubResource( 5 )
+CheckButton/styles/hover_pressed = SubResource( 5 )
+CheckButton/styles/normal = SubResource( 5 )
+CheckButton/styles/pressed = SubResource( 5 )
+Label/colors/font_color = Color( 1, 1, 1, 1 )

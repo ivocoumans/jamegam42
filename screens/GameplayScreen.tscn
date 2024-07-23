@@ -1,12 +1,20 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://objects/World.tscn" type="PackedScene" id=1]
 [ext_resource path="res://actors/Player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://objects/Decay.tscn" type="PackedScene" id=3]
 [ext_resource path="res://screens/GameplayScreen.gd" type="Script" id=4]
+[ext_resource path="res://ui/UI.tscn" type="PackedScene" id=5]
+[ext_resource path="res://assets/background.png" type="Texture" id=6]
 
-[node name="GameplayScreen" type="Node2D"]
+[node name="GameplayScreen" type="Node"]
 script = ExtResource( 4 )
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 6 )
+expand = true
 
 [node name="World" parent="." instance=ExtResource( 1 )]
 
@@ -15,6 +23,12 @@ position = Vector2( 512, 316 )
 
 [node name="Decay" parent="." instance=ExtResource( 3 )]
 
+[node name="UI" parent="." instance=ExtResource( 5 )]
+
+[connection signal="is_charged" from="Player" to="." method="_on_Player_is_charged"]
+[connection signal="is_charging" from="Player" to="." method="_on_Player_is_charging"]
+[connection signal="is_recharged" from="Player" to="." method="_on_Player_is_recharged"]
+[connection signal="is_recharging" from="Player" to="." method="_on_Player_is_recharging"]
 [connection signal="shoot" from="Player" to="." method="_on_Player_shoot"]
 [connection signal="shoot_charged" from="Player" to="." method="_on_Player_shoot_charged"]
 [connection signal="intersects" from="Decay" to="." method="_on_Decay_intersects"]

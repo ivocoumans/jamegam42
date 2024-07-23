@@ -3,6 +3,10 @@ extends KinematicBody2D
 
 signal shoot
 signal shoot_charged
+signal is_recharging
+signal is_recharged
+signal is_charging
+signal is_charged
 
 
 const COYOTE_TIME = 0.065
@@ -44,6 +48,7 @@ func _input(event):
 	if event.is_action_pressed("shoot") and is_charging == false:
 		is_charging = true
 		charge_timer = 0
+		emit_signal("is_charging")
 	
 	if is_recharging:
 		return
@@ -57,6 +62,7 @@ func _input(event):
 		is_recharging = true
 		is_charging = false
 		is_charged = false
+		emit_signal("is_recharging")
 
 
 func _physics_process(delta):
@@ -103,6 +109,7 @@ func _physics_process(delta):
 			recharge_timer = 0
 			is_recharging = false
 			print("Shot ready")
+			emit_signal("is_recharged")
 	
 	if !is_recharging and is_charging:
 		charge_timer += delta
@@ -110,4 +117,5 @@ func _physics_process(delta):
 			if is_charged == false:
 				print("Shot fully charged")
 			is_charged = true
+			emit_signal("is_charged")
 
