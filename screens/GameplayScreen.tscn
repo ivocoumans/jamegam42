@@ -25,6 +25,7 @@ position = Vector2( 512, 316 )
 
 [node name="UI" parent="." instance=ExtResource( 5 )]
 
+[connection signal="fallen" from="Player" to="." method="_on_Player_fallen"]
 [connection signal="is_charged" from="Player" to="." method="_on_Player_is_charged"]
 [connection signal="is_charging" from="Player" to="." method="_on_Player_is_charging"]
 [connection signal="is_recharged" from="Player" to="." method="_on_Player_is_recharged"]

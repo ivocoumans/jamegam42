@@ -42,6 +42,34 @@ var props = []
 var decay_size_x = 0
 
 
+func reset():
+	direction = Vector2.ZERO
+	pixels_moved = 0
+	pixels_moved_decay = 0
+	rendered = 0
+	features = []
+	props = []
+	decay_size_x = 0
+	position.x = 0
+	
+	# clear the environment and props
+	$Environment.clear()
+	$Props.clear()
+	features.clear()
+	props.clear()
+	
+	# draw the ground
+	var y = GROUND_Y_BEGIN
+	for x in 4096:
+		$Environment.set_cell(x, y, 0)
+		$Environment.set_cell(x, y + 1, 1)
+		$Environment.set_cell(x, y + 2, 1)
+	
+	randomize()
+	_reset(true)
+	_generate_next_screen()
+
+
 func move(delta):
 	direction = Vector2.ZERO
 	direction.x = -1
@@ -141,9 +169,7 @@ func _render_small_tree(rect, decayed = false):
 
 
 func _ready():
-	randomize()
-	_reset(true)
-	_generate_next_screen()
+	reset()
 
 
 func _reset(skip_copy = false):

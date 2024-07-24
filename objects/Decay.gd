@@ -1,4 +1,4 @@
-extends ColorRect
+extends TextureRect
 
 
 signal intersects(body)
@@ -21,8 +21,19 @@ var grow_direction = 1
 var is_paused = false
 
 
-func pause():
-	is_paused = !is_paused
+func reset():
+	is_slowed = false
+	is_push_back = false
+	slow_timer = 0
+	grow_direction = 1
+	is_paused = false
+	set_size(Vector2(64, 512))
+	$Area2D.position.x = 32
+	$Particles.position.x = 64
+
+
+func pause(paused):
+	is_paused = paused
 
  
 func slow():
@@ -66,6 +77,7 @@ func _process(delta):
 		var rect = get_rect()
 		var x = rect.position.x + rect.size.x - AREA_SIZE_X
 		$Area2D.position.x = x
+		$Particles.position.x = x + 64
 
 
 func _on_Area2D_body_entered(body):

@@ -8,15 +8,20 @@ export (int) var speed_x = 350
 export (int) var speed_y = 200
 export (int) var bullet_gravity = 5
 export (float) var charged_multiplier = 1.25
+export (float) var scale_multiplier = 1.0
 
 
 var velocity = Vector2.ZERO
 var is_charged = false
 var is_spent = false
+var emitting_timer = 0
 
 
 func remove():
-	queue_free()
+	$Sprite.visible = false
+	$Trail.visible = false
+	$Explode.visible = true
+	$Explode.emitting = true
 
 
 func _ready():
@@ -24,10 +29,17 @@ func _ready():
 	if is_charged:
 		velocity.x *= charged_multiplier
 		velocity.y *= charged_multiplier
-	scale = Vector2(0.5, 0.5)
+		$Trail.scale_amount = 0.75
+		$Trail.speed_scale = 3
+	scale = Vector2(0.5, 0.5) * scale_multiplier
 
 
 func _process(delta):
+	if $Explode.emitting == true:
+		emitting_timer += delta
+		if emitting_timer > 1:
+			queue_free()
+			return
 	velocity.y += bullet_gravity
 	position += velocity * delta
 

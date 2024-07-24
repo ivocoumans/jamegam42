@@ -7,6 +7,7 @@ signal is_recharging
 signal is_recharged
 signal is_charging
 signal is_charged
+signal fallen
 
 
 const COYOTE_TIME = 0.065
@@ -28,6 +29,7 @@ var is_grounded = false
 var is_jumping = false
 var allow_jumping = true
 var is_recharging = false
+var is_recharged = true
 var is_charging = false
 var is_charged = false
 var jump_buffer = 0
@@ -37,8 +39,28 @@ var initial_x = 0
 var is_paused = false
 
 
-func pause():
-	is_paused = !is_paused
+func reset():
+	velocity = Vector2.ZERO
+	is_shooting = false
+	is_grounded = false
+	is_jumping = false
+	allow_jumping = true
+	is_recharging = false
+	is_recharged = true
+	is_charging = false
+	is_charged = false
+	jump_buffer = 0
+	recharge_timer = 0
+	charge_timer = 0
+	is_paused = false
+	position = Vector2(512, 316)
+	initial_x = position.x
+	$AnimationPlayer.play("jump")
+	$AnimationPlayer.stop(true)
+
+
+func pause(paused):
+	is_paused = paused
 	if is_paused:
 		$AnimationPlayer.stop()
 	else:
@@ -51,27 +73,33 @@ func get_rect():
 
 
 func _ready():
-	initial_x = position.x
+	reset()
 
 
 func _input(event):
-	if event.is_action_pressed("shoot") and is_charging == false:
+	if is_paused:
+		return
+#
+	if is_recharging:
+		return
+	
+	if event.is_action_pressed("shoot") and is_recharged and !is_charging:
 		is_charging = true
 		charge_timer = 0
 		emit_signal("is_charging")
 	
-	if is_recharging:
-		return
-	
-	if event.is_action_released("shoot"):
+	if event.is_action_released("shoot") and is_recharged:
 		if is_charged:
 			emit_signal("shoot_charged")
 		else:
 			emit_signal("shoot")
 		charge_timer = 0
+		
 		is_recharging = true
+		is_recharged = false
 		is_charging = false
 		is_charged = false
+		
 		emit_signal("is_recharging")
 		is_shooting = true
 		$AnimationPlayer.play("shoot")
@@ -102,6 +130,7 @@ func _physics_process(delta):
 		is_jumping = true
 		velocity.y = -jump_speed
 		jump_buffer = 0
+		SFX.play_jump()
 	if Input.is_action_just_released("jump"):
 		allow_jumping = true
 	
@@ -118,19 +147,26 @@ func _physics_process(delta):
 	
 	velocity = move_and_slide(velocity, Vector2.UP)
 	
+	# check for game over when the player fell in a hole
+	if position.y > 480:
+		emit_signal("fallen")
+	
+	# shooting
 	if is_recharging:
 		recharge_timer += delta
 		if recharge_timer >= RECHARGE_TIME:
 			recharge_timer = 0
 			is_recharging = false
+			is_recharged = true
 			emit_signal("is_recharged")
-	
-	if !is_recharging and is_charging:
+	elif is_recharged and is_charging:
 		charge_timer += delta
 		if charge_timer >= CHARGE_TIME:
+			is_charging = false
 			is_charged = true
 			emit_signal("is_charged")
 	
+	# animation
 	if $AnimationPlayer.current_animation != "shoot" and !is_shooting:
 		if is_grounded and $AnimationPlayer.current_animation != "run":
 			$AnimationPlayer.play("run")

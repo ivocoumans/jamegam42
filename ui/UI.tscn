@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://ui/WandStatus.tscn" type="PackedScene" id=1]
+[ext_resource path="res://ui/modals/GameStartModal.tscn" type="PackedScene" id=2]
 [ext_resource path="res://ui/ScoreDisplay.tscn" type="PackedScene" id=3]
+[ext_resource path="res://ui/modals/GamePauseModal.tscn" type="PackedScene" id=4]
+[ext_resource path="res://ui/modals/GameOverModal.tscn" type="PackedScene" id=5]
 
 [node name="UI" type="Control"]
 anchor_right = 1.0
@@ -25,11 +28,20 @@ margin_right = -30.0
 margin_bottom = -30.0
 
 [node name="ScoreDisplay" parent="." instance=ExtResource( 3 )]
-anchor_left = 1.0
+anchor_left = 0.0
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.0
 anchor_bottom = 1.0
-margin_left = -374.0
-margin_top = -94.0
-margin_right = -124.0
-margin_bottom = -30.0
+margin_left = 30.0
+margin_top = -96.0
+margin_right = 280.0
+margin_bottom = -32.0
+
+[node name="GameStartModal" parent="." instance=ExtResource( 2 )]
+visible = false
+
+[node name="GamePauseModal" parent="." instance=ExtResource( 4 )]
+visible = false
+
+[node name="GameOverModal" parent="." instance=ExtResource( 5 )]
+visible = false
