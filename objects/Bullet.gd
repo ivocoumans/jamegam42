@@ -15,6 +15,11 @@ var velocity = Vector2.ZERO
 var is_charged = false
 var is_spent = false
 var emitting_timer = 0
+var is_paused = false
+
+
+func pause(paused):
+	is_paused = paused
 
 
 func remove():
@@ -35,6 +40,9 @@ func _ready():
 
 
 func _process(delta):
+	if is_paused:
+		return
+	
 	if $Explode.emitting == true:
 		emitting_timer += delta
 		if emitting_timer > 1:
