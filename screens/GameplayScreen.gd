@@ -70,8 +70,8 @@ func _pause_game(paused):
 	is_paused = paused
 	$Decay.pause(paused)
 	$Player.pause(paused)
-	if $Bullet != null:
-		$Bullet.pause(paused)
+	if bullet != null and is_instance_valid(bullet):
+		bullet.pause(paused)
 
 
 func _on_Player_shoot():
