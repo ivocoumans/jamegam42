@@ -26,7 +26,7 @@ func _input(event):
 		if is_game_start:
 			$UI/GameStartModal.visible = false
 			_pause_game(false)
-			if !BGM.is_playing() and !OS.is_debug_build():
+			if !BGM.is_playing():
 				BGM.play_title()
 		elif is_game_over:
 			$UI/GameOverModal.visible = false
