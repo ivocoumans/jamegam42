@@ -26,10 +26,12 @@ _global_script_class_icons={
 
 [application]
 
-config/name="JameGam42"
-config/description="My entry for the JameGam42"
+config/name="Decay Runner"
+config/description="My entry for the Jame Gam #42"
 run/main_scene="res://screens/GameplayScreen.tscn"
 boot_splash/show_image=false
+config/icon="res://assets/icon.png"
+config/windows_native_icon="res://assets/icon.ico"
 
 [autoload]
 
