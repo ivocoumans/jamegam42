@@ -164,7 +164,7 @@ func _generate_next_screen():
 func _copy_last_screen(arr):
 	var copied = []
 	for item in arr:
-		if item.rect.position.x >= SCREEN_TILES_X * 3:
+		if item.rect.position.x >= SCREEN_TILES_X * 3 - 5:
 			copied.append(item)
 	return copied
 
